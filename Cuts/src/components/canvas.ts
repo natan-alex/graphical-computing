@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { DrawingBoard, SetPixelParams } from "../contracts/drawingBoard";
+import { Point } from "../core/point";
+import { MouseEventHandler } from "../common/types";
+import { DrawingBoard, DrawRectangleParams, SetPixelParams } from "../contracts/drawingBoard";
 
 import { throwIfNull } from "../utils/exceptions";
 
@@ -23,6 +25,8 @@ export class Canvas implements DrawingBoard {
 
     this.borderWidth = this.getElementBorderWidth();
     this.containerPadding = this.getContainerPadding();
+
+    this.setup();
   }
 
   private getContainerPadding() {
@@ -41,17 +45,16 @@ export class Canvas implements DrawingBoard {
     return parseInt(computedStyle.getPropertyValue("border-width"));
   }
 
-  private addMouseDownHandler() {
-    this.element.addEventListener("mousedown", (event) => {
-      this.setPixel({ x: event.x, y: event.y });
-    });
-  }
-
-  setup() {
+  private setup() {
     this.element.width = window.innerWidth - 20;
     this.element.height = window.innerHeight * 0.85;
+  }
 
-    this.addMouseDownHandler();
+  private getPointConsideringBorderAndPaddings(point: Point): Point {
+    const x = point.x - this.borderWidth - this.containerPadding;
+    const y = point.y - this.borderWidth - this.containerPadding;
+
+    return new Point(x, y);
   }
 
   clearContent() {
@@ -59,13 +62,28 @@ export class Canvas implements DrawingBoard {
   }
 
   setPixel(params: SetPixelParams) {
-    const x = params.x - this.borderWidth - this.containerPadding;
-    const y = params.y - this.borderWidth - this.containerPadding;
+    const point = this.getPointConsideringBorderAndPaddings(params.atPoint);
 
     if (params.color) {
       this.context.fillStyle = params.color;
     }
 
-    this.context.fillRect(x, y, 2, 2);
+    this.context.fillRect(point.x, point.y, 1, 1);
+  }
+
+  setClickEventHandler(handler: MouseEventHandler): void {
+    this.element.onclick = (event) => {
+      if (handler) handler(event);
+    };
+  }
+
+  drawRectangle(params: DrawRectangleParams): void {
+    const point = this.getPointConsideringBorderAndPaddings(params.leftCorner);
+
+    if (params.color) {
+      this.context.fillStyle = params.color;
+    }
+
+    this.context.strokeRect(point.x, point.y, params.width, params.height);
   }
 }

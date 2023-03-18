@@ -1,12 +1,13 @@
 import { Canvas } from "./components/canvas";
-import { Buttons } from "./components/buttons";
+import { Manager } from "./managers/manager";
+import { ButtonsAgregator } from "./components/buttonsAgregator";
 
 function main() {
   const canvas = new Canvas();
-  const buttons = new Buttons(canvas);
+  const buttonsAgregator = new ButtonsAgregator();
+  const manager = new Manager(canvas, buttonsAgregator);
 
-  canvas.setup();
-  buttons.setup();
+  manager.setup();
 }
 
 window.addEventListener("DOMContentLoaded", main);

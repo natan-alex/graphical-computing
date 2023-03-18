@@ -34,16 +34,15 @@ export class DDA implements LineDrawer {
 
     this.computeBasicThingsBasedOn(startPoint, endPoint);
 
-    let currentX = startPoint.x;
-    let currentY = startPoint.y;
+    const currentPoint = new Point(startPoint.x, startPoint.y);
 
-    this.drawingBoard.setPixel({ x: currentX, y: currentY });
+    this.drawingBoard.setPixel({ atPoint: currentPoint });
 
     for (let i = 0; i < this.steps; ++i) {
-      currentX += this.xAxisIncrement;
-      currentY += this.yAxisIncrement;
+      currentPoint.x += this.xAxisIncrement;
+      currentPoint.y += this.yAxisIncrement;
 
-      this.drawingBoard.setPixel({ x: currentX, y: currentY });
+      this.drawingBoard.setPixel({ atPoint: currentPoint });
     }
   }
 }
