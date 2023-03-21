@@ -7,11 +7,7 @@ export class Point {
     this.y = y;
   }
 
-  distanceTo(otherPoint: Point): number {
-    const xAxisDifference = Math.abs(otherPoint.x - this.x);
-    const yAxisDifference = Math.abs(otherPoint.y - this.y);
-    const doubleXAxisDifference = xAxisDifference * xAxisDifference;
-    const doubleYAxisDifference = yAxisDifference * yAxisDifference;
-    return Math.sqrt(doubleXAxisDifference + doubleYAxisDifference);
+  static clone(otherPoint: Point) {
+    return new Point(otherPoint.x, otherPoint.y);
   }
 }

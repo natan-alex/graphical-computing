@@ -8,11 +8,12 @@ export type SetPixelParams = {
 };
 
 export type DrawRectangleParams = {
-  width: number;
-  height: number;
   color?: string;
-  leftCorner: Point;
+  topLeftCorner: Point;
+  rightBottomCorner: Point;
 };
+
+export type ClearRectangleParams = Omit<DrawRectangleParams, "color">;
 
 export interface DrawingBoard {
   clearContent(): void;
@@ -21,5 +22,11 @@ export interface DrawingBoard {
 
   drawRectangle(params: DrawRectangleParams): void;
 
-  setClickEventHandler(handler: MouseEventHandler): void;
+  clearRectangle(params: ClearRectangleParams): void;
+
+  setMouseDownEventHandler(handler: MouseEventHandler): void;
+
+  setMouseMoveEventHandler(handler: MouseEventHandler): void;
+
+  setMouseUpEventHandler(handler: MouseEventHandler): void;
 }

@@ -1,25 +1,30 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { DDA } from "../core/dda";
 import { Point } from "../core/point";
-
-import { LineDrawer } from "../contracts/lineDrawer";
-import { DrawingBoard } from "../contracts/drawingBoard";
-
-import { ButtonsAgregator } from "../components/buttonsAgregator";
+import { CohenSutherland } from "../core/cohenSutherland";
 
 import { MouseEventHandler } from "../common/types";
 
-import { DDA } from "../drawers/dda";
+import { Cut } from "../contracts/cut";
+import { LineDrawer } from "../contracts/lineDrawer";
+import { DrawingBoard } from "../contracts/drawingBoard";
+
+import { Cut as CutImpl } from "../components/cut";
+import { ButtonsAgregator } from "../components/buttonsAgregator";
 
 import { throwIfNull } from "../utils/exceptions";
 
 export class Manager {
+  private readonly cut: Cut;
   private readonly ddaLineDrawer: LineDrawer;
   private readonly drawingBoard: DrawingBoard;
+  private readonly cohenSutherland: CohenSutherland;
   private readonly buttonsAgregator: ButtonsAgregator;
 
   private startPoint: Point | null = null;
+  private endPoint: Point | null = null;
 
-  private actionToExecuteOnNextDrawingBoardClick: "drawALine" | "defineACut" =
-    "drawALine";
+  private actionToExecute: "drawALine" | "drawACut" = "drawALine";
 
   constructor(drawingBoard: DrawingBoard, buttonsAgregator: ButtonsAgregator) {
     throwIfNull(drawingBoard, "Drawing board cannot be null");
@@ -27,58 +32,65 @@ export class Manager {
 
     this.drawingBoard = drawingBoard;
     this.buttonsAgregator = buttonsAgregator;
+
+    this.cut = new CutImpl(drawingBoard);
     this.ddaLineDrawer = new DDA(drawingBoard);
+    this.cohenSutherland = new CohenSutherland(this.cut, this.ddaLineDrawer);
   }
 
-  private handleDrawLineActionOnClick: MouseEventHandler = (event) => {
-    const point = new Point(event.x, event.y);
+  private handleDrawLineActionOnMouseUp() {
+    if (this.actionToExecute !== "drawALine") return;
 
-    if (this.startPoint) {
-      this.ddaLineDrawer.drawLineBetween(this.startPoint, point);
-      this.startPoint = null;
+    if (this.cut.isDrawnOnScreen) {
+      this.cohenSutherland.drawLineOnCut(this.startPoint!, this.endPoint!);
     } else {
-      this.startPoint = point;
+      this.ddaLineDrawer.drawLineBetween(this.startPoint!, this.endPoint!);
     }
-  };
+  }
 
-  private handleDefineACutActionOnClick: MouseEventHandler = (event) => {
-    const point = new Point(event.x, event.y);
+  private handleDefineACutActionOnMouseUp() {
+    this.cut.drawSelf({
+      topLeftCorner: this.startPoint!,
+      rightBottomCorner: this.endPoint!,
+    });
+  }
 
-    if (this.startPoint) {
-      this.drawingBoard.drawRectangle({
-        leftCorner: this.startPoint,
-        width: point.x - this.startPoint.x,
-        height: point.y - this.startPoint.y,
-      });
+  private handleMouseDownOnDrawingBoard: MouseEventHandler = (event) => {
+    if (!this.startPoint) {
+      this.startPoint = new Point(event.x, event.y);
+      return;
+    }
 
-      this.startPoint = null;
+    this.endPoint = new Point(event.x, event.y);
+
+    if (this.actionToExecute === "drawALine") {
+      this.handleDrawLineActionOnMouseUp();
     } else {
-      this.startPoint = point;
+      this.handleDefineACutActionOnMouseUp();
     }
-  };
 
-  private onDrawingBoardClick: MouseEventHandler = (event) => {
-    if (this.actionToExecuteOnNextDrawingBoardClick === "drawALine") {
-      this.handleDrawLineActionOnClick(event);
-    } else {
-      this.handleDefineACutActionOnClick(event);
-    }
+    this.startPoint = null;
+    this.endPoint = null;
   };
 
   private onDrawLineButtonClick: MouseEventHandler = () => {
-    this.actionToExecuteOnNextDrawingBoardClick = "drawALine";
+    this.actionToExecute = "drawALine";
   };
 
   private onDefineCutButtonClick: MouseEventHandler = () => {
-    this.actionToExecuteOnNextDrawingBoardClick = "defineACut";
+    this.actionToExecute = "drawACut";
   };
 
   private onClearScreenButtonClick: MouseEventHandler = () => {
+    this.cut.removeFromScreen();
     this.drawingBoard.clearContent();
   };
 
   setup() {
-    this.drawingBoard.setClickEventHandler(this.onDrawingBoardClick);
+    this.drawingBoard.setMouseDownEventHandler(
+      this.handleMouseDownOnDrawingBoard
+    );
+
     this.buttonsAgregator.setDrawLineButtonClickEventHandler(
       this.onDrawLineButtonClick
     );
