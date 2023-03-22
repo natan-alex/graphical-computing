@@ -108,6 +108,7 @@ export class Canvas implements DrawingBoard {
     const topLeftCorner = this.getPointConsideringBorderAndPaddings(
       params.topLeftCorner
     );
+
     const rightBottomCorner = this.getPointConsideringBorderAndPaddings(
       params.rightBottomCorner
     );
@@ -126,13 +127,16 @@ export class Canvas implements DrawingBoard {
     const topLeftCorner = this.getPointConsideringBorderAndPaddings(
       params.topLeftCorner
     );
+
     const rightBottomCorner = this.getPointConsideringBorderAndPaddings(
       params.rightBottomCorner
     );
 
-    const width = rightBottomCorner.x - topLeftCorner.x;
-    const height = rightBottomCorner.y - topLeftCorner.y;
-
-    this.context.clearRect(topLeftCorner.x, topLeftCorner.y, width, height);
+    this.context.clearRect(
+      topLeftCorner.x - this.borderWidth,
+      topLeftCorner.y - this.borderWidth,
+      rightBottomCorner.x - topLeftCorner.x + this.borderWidth + this.borderWidth,
+      rightBottomCorner.y - topLeftCorner.y + this.borderWidth + this.borderWidth
+    );
   }
 }

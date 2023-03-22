@@ -39,8 +39,6 @@ export class Manager {
   }
 
   private handleDrawLineActionOnMouseUp() {
-    if (this.actionToExecute !== "drawALine") return;
-
     if (this.cut.isDrawnOnScreen) {
       this.cohenSutherland.drawLineOnCut(this.startPoint!, this.endPoint!);
     } else {
@@ -49,6 +47,8 @@ export class Manager {
   }
 
   private handleDefineACutActionOnMouseUp() {
+    this.cut.removeFromScreen();
+
     this.cut.drawSelf({
       topLeftCorner: this.startPoint!,
       rightBottomCorner: this.endPoint!,
