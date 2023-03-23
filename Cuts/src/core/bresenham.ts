@@ -39,17 +39,16 @@ export class Bresenham implements LineDrawer {
   private handleCaseWhereDeltaXIsGreater() {
     let p = 2 * this.deltaY - this.deltaX;
 
-    const incrementForPWhenItIsNegative = 2 * this.deltaY;
-    const incrementForPWhenItIsPositiveOr0 = 2 * (this.deltaY - this.deltaX);
+    const incrementsForP = {
+      whenNegative: 2 * this.deltaY,
+      whenPositiveOr0: 2 * (this.deltaY - this.deltaX),
+    };
 
     for (let i = 0; i < this.deltaX; i++) {
       this.currentPoint!.x += this.xAxisIncrement;
       this.currentPoint!.y += p >= 0 ? this.yAxisIncrement : 0;
 
-      p +=
-        p >= 0
-          ? incrementForPWhenItIsPositiveOr0
-          : incrementForPWhenItIsNegative;
+      p += p >= 0 ? incrementsForP.whenPositiveOr0 : incrementsForP.whenNegative;
 
       this.drawingBoard.setPixel({ atPoint: this.currentPoint! });
     }
@@ -58,23 +57,25 @@ export class Bresenham implements LineDrawer {
   private handleCaseWhereDeltaYIsGreater() {
     let p = 2 * this.deltaX - this.deltaY;
 
-    const incrementForPWhenItIsNegative = 2 * this.deltaX;
-    const incrementForPWhenItIsPositiveOr0 = 2 * (this.deltaX - this.deltaY);
+    const incrementsForP = {
+      whenNegative: 2 * this.deltaX,
+      whenPositiveOr0: 2 * (this.deltaX - this.deltaY),
+    };
 
     for (let i = 0; i < this.deltaY; i++) {
       this.currentPoint!.y += this.yAxisIncrement;
       this.currentPoint!.x += p >= 0 ? this.xAxisIncrement : 0;
 
-      p +=
-        p >= 0
-          ? incrementForPWhenItIsPositiveOr0
-          : incrementForPWhenItIsNegative;
+      p += p >= 0 ? incrementsForP.whenPositiveOr0 : incrementsForP.whenNegative;
 
       this.drawingBoard.setPixel({ atPoint: this.currentPoint! });
     }
   }
 
   drawLineBetween(startPoint: Point, endPoint: Point): void {
+    throwIfNull(startPoint, "Start point cannot be null");
+    throwIfNull(endPoint, "End point cannot be null");
+
     this.initFieldsBasedOn(startPoint, endPoint);
 
     if (this.deltaX > this.deltaY) {
