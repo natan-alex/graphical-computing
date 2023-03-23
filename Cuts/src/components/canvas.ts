@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { Point } from "../core/point";
-import { MouseEventHandler } from "../common/types";
 
 import {
   ClearRectangleParams,
@@ -22,9 +21,7 @@ export class Canvas implements DrawingBoard {
 
   constructor() {
     const element = document.getElementById("canvas") as HTMLCanvasElement;
-    const container = document.getElementById(
-      "canvas-container"
-    ) as HTMLDivElement;
+    const container = document.getElementById("canvas-container") as HTMLDivElement;
     const context = element?.getContext("2d");
 
     throwIfNull(element, "Canvas element cannot be null");
@@ -38,10 +35,10 @@ export class Canvas implements DrawingBoard {
     this.borderWidth = this.getElementBorderWidth();
     this.containerPadding = this.getContainerPadding();
 
-    this.setup();
+    this.setElementWidthAndHeight();
   }
 
-  private setup() {
+  private setElementWidthAndHeight() {
     this.element.width =
       this.container.clientWidth -
       this.containerPadding -
@@ -65,7 +62,7 @@ export class Canvas implements DrawingBoard {
     return parseInt(computedStyle.getPropertyValue("border-width"));
   }
 
-  private getPointConsideringBorderAndPaddings(point: Point): Point {
+  private translatePoint(point: Point): Point {
     const x = point.x - this.borderWidth - this.containerPadding;
     const y = point.y - this.borderWidth - this.containerPadding;
 
@@ -77,7 +74,7 @@ export class Canvas implements DrawingBoard {
   }
 
   setPixel(params: SetPixelParams) {
-    const point = this.getPointConsideringBorderAndPaddings(params.atPoint);
+    const point = this.translatePoint(params.atPoint);
 
     if (params.color) {
       this.context.fillStyle = params.color;
@@ -86,32 +83,9 @@ export class Canvas implements DrawingBoard {
     this.context.fillRect(point.x, point.y, 1, 1);
   }
 
-  setMouseDownEventHandler(handler: MouseEventHandler): void {
-    this.element.onmousedown = (event) => {
-      if (handler) handler(event);
-    };
-  }
-
-  setMouseMoveEventHandler(handler: MouseEventHandler): void {
-    this.element.onmousemove = (event) => {
-      if (handler) handler(event);
-    };
-  }
-
-  setMouseUpEventHandler(handler: MouseEventHandler): void {
-    this.element.onmouseup = (event) => {
-      if (handler) handler(event);
-    };
-  }
-
   drawRectangle(params: DrawRectangleParams): void {
-    const topLeftCorner = this.getPointConsideringBorderAndPaddings(
-      params.topLeftCorner
-    );
-
-    const rightBottomCorner = this.getPointConsideringBorderAndPaddings(
-      params.rightBottomCorner
-    );
+    const topLeftCorner = this.translatePoint(params.topLeftCorner);
+    const rightBottomCorner = this.translatePoint(params.rightBottomCorner);
 
     if (params.color) {
       this.context.fillStyle = params.color;
@@ -124,19 +98,32 @@ export class Canvas implements DrawingBoard {
   }
 
   clearRectangle(params: ClearRectangleParams): void {
-    const topLeftCorner = this.getPointConsideringBorderAndPaddings(
-      params.topLeftCorner
-    );
+    const topLeftCorner = this.translatePoint(params.topLeftCorner);
+    const rightBottomCorner = this.translatePoint(params.rightBottomCorner);
 
-    const rightBottomCorner = this.getPointConsideringBorderAndPaddings(
-      params.rightBottomCorner
-    );
+    const x = topLeftCorner.x - this.borderWidth;
+    const y = topLeftCorner.y - this.borderWidth;
 
-    this.context.clearRect(
-      topLeftCorner.x - this.borderWidth,
-      topLeftCorner.y - this.borderWidth,
-      rightBottomCorner.x - topLeftCorner.x + this.borderWidth + this.borderWidth,
-      rightBottomCorner.y - topLeftCorner.y + this.borderWidth + this.borderWidth
-    );
+    const width =
+      rightBottomCorner.x -
+      topLeftCorner.x +
+      this.borderWidth +
+      this.borderWidth;
+
+    const height =
+      rightBottomCorner.y -
+      topLeftCorner.y +
+      this.borderWidth +
+      this.borderWidth;
+
+    this.context.clearRect(x, y, width, height);
+  }
+
+  addEventListener<K extends keyof HTMLElementEventMap>(
+    type: K,
+    listener: (event: HTMLElementEventMap[K]) => void,
+    options?: boolean | AddEventListenerOptions | undefined
+  ): void {
+    this.element.addEventListener(type, listener, options);
   }
 }

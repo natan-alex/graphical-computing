@@ -1,52 +1,59 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { DDA } from "../core/dda";
 import { Point } from "../core/point";
+import { LiangBarsky } from "../core/liangBarsky";
 import { CohenSutherland } from "../core/cohenSutherland";
-
-import { MouseEventHandler } from "../common/types";
 
 import { Cut } from "../contracts/cut";
 import { LineDrawer } from "../contracts/lineDrawer";
 import { DrawingBoard } from "../contracts/drawingBoard";
+import { CutLineDrawer } from "../contracts/cutLineDrawer";
 
 import { Cut as CutImpl } from "../components/cut";
-import { ButtonsAgregator } from "../components/buttonsAgregator";
+import { ActionTriggers } from "../contracts/actionTriggers";
 
 import { throwIfNull } from "../utils/exceptions";
+import { Bresenham } from "../core/bresenham";
+
+enum Actions {
+  DrawCut,
+  DrawLines,
+}
 
 export class Manager {
   private readonly cut: Cut;
-  private readonly ddaLineDrawer: LineDrawer;
   private readonly drawingBoard: DrawingBoard;
-  private readonly cohenSutherland: CohenSutherland;
-  private readonly buttonsAgregator: ButtonsAgregator;
+  private readonly actionTriggers: ActionTriggers;
+
+  private lineDrawer: LineDrawer;
+  private cutLineDrawer: CutLineDrawer;
 
   private startPoint: Point | null = null;
   private endPoint: Point | null = null;
 
-  private actionToExecute: "drawALine" | "drawACut" = "drawALine";
+  private actionToExecute = Actions.DrawLines;
 
-  constructor(drawingBoard: DrawingBoard, buttonsAgregator: ButtonsAgregator) {
+  constructor(drawingBoard: DrawingBoard, actionTriggers: ActionTriggers) {
     throwIfNull(drawingBoard, "Drawing board cannot be null");
-    throwIfNull(buttonsAgregator, "Buttons agregator cannot be null");
+    throwIfNull(actionTriggers, "Action triggers cannot be null");
 
     this.drawingBoard = drawingBoard;
-    this.buttonsAgregator = buttonsAgregator;
+    this.actionTriggers = actionTriggers;
 
     this.cut = new CutImpl(drawingBoard);
-    this.ddaLineDrawer = new DDA(drawingBoard);
-    this.cohenSutherland = new CohenSutherland(this.cut, this.ddaLineDrawer);
+    this.lineDrawer = new DDA(drawingBoard);
+    this.cutLineDrawer = new CohenSutherland(this.cut, this.lineDrawer);
   }
 
-  private handleDrawLineActionOnMouseUp() {
+  private handleDrawLinesAction() {
     if (this.cut.isDrawnOnScreen) {
-      this.cohenSutherland.drawLineOnCut(this.startPoint!, this.endPoint!);
+      this.cutLineDrawer.drawLineOnCut(this.startPoint!, this.endPoint!);
     } else {
-      this.ddaLineDrawer.drawLineBetween(this.startPoint!, this.endPoint!);
+      this.lineDrawer.drawLineBetween(this.startPoint!, this.endPoint!);
     }
   }
 
-  private handleDefineACutActionOnMouseUp() {
+  private handleDrawCutAction() {
     this.cut.removeFromScreen();
 
     this.cut.drawSelf({
@@ -55,7 +62,7 @@ export class Manager {
     });
   }
 
-  private handleMouseDownOnDrawingBoard: MouseEventHandler = (event) => {
+  private handleClickOnDrawingBoard(event: MouseEvent) {
     if (!this.startPoint) {
       this.startPoint = new Point(event.x, event.y);
       return;
@@ -63,42 +70,72 @@ export class Manager {
 
     this.endPoint = new Point(event.x, event.y);
 
-    if (this.actionToExecute === "drawALine") {
-      this.handleDrawLineActionOnMouseUp();
+    if (this.actionToExecute === Actions.DrawLines) {
+      this.handleDrawLinesAction();
     } else {
-      this.handleDefineACutActionOnMouseUp();
+      this.handleDrawCutAction();
     }
 
     this.startPoint = null;
     this.endPoint = null;
-  };
+  }
 
-  private onDrawLineButtonClick: MouseEventHandler = () => {
-    this.actionToExecute = "drawALine";
-  };
+  private handleDrawCutActionTriggered() {
+    this.actionToExecute = Actions.DrawCut;
+  }
 
-  private onDefineCutButtonClick: MouseEventHandler = () => {
-    this.actionToExecute = "drawACut";
-  };
-
-  private onClearScreenButtonClick: MouseEventHandler = () => {
+  private handleClearScreenActionTriggered() {
     this.cut.removeFromScreen();
     this.drawingBoard.clearContent();
-  };
+  }
+
+  private handleDDASelectedToDrawLinesActionTriggered() {
+    this.actionToExecute = Actions.DrawLines;
+    this.lineDrawer = new DDA(this.drawingBoard);
+  }
+
+  private handleBresenhamSelectedToDrawLinesActionTriggered() {
+    this.actionToExecute = Actions.DrawLines;
+    this.lineDrawer = new Bresenham(this.drawingBoard);
+  }
+
+  private handleLiangBarskySelectedToDrawLineOnCutActionTriggered() {
+    this.actionToExecute = Actions.DrawLines;
+    this.cutLineDrawer = new LiangBarsky(this.cut, this.lineDrawer);
+  }
+
+  private handleCohenSutherlandSelectedToDrawLineOnCutActionTriggered() {
+    this.actionToExecute = Actions.DrawLines;
+    this.cutLineDrawer = new CohenSutherland(this.cut, this.lineDrawer);
+  }
 
   setup() {
-    this.drawingBoard.setMouseDownEventHandler(
-      this.handleMouseDownOnDrawingBoard
+    this.drawingBoard.addEventListener("click", (e) => {
+      this.handleClickOnDrawingBoard(e);
+    });
+    this.actionTriggers.handleDrawCutActionTriggered(() => {
+      this.handleDrawCutActionTriggered();
+    });
+    this.actionTriggers.handleClearScreenActionTriggered(() => {
+      this.handleClearScreenActionTriggered();
+    });
+    this.actionTriggers.handleDDASelectedToDrawLinesActionTriggered(() => {
+      this.handleDDASelectedToDrawLinesActionTriggered();
+    });
+    this.actionTriggers.handleBresenhamSelectedToDrawLinesActionTriggered(
+      () => {
+        this.handleBresenhamSelectedToDrawLinesActionTriggered();
+      }
     );
-
-    this.buttonsAgregator.setDrawLineButtonClickEventHandler(
-      this.onDrawLineButtonClick
+    this.actionTriggers.handleLiangBarskySelectedToDrawLineOnCutActionTriggered(
+      () => {
+        this.handleLiangBarskySelectedToDrawLineOnCutActionTriggered();
+      }
     );
-    this.buttonsAgregator.setDefineCutButtonClickEventHandler(
-      this.onDefineCutButtonClick
-    );
-    this.buttonsAgregator.setClearScreenButtonClickEventHandler(
-      this.onClearScreenButtonClick
+    this.actionTriggers.handleCohenSutherlandSelectedToDrawLineOnCutActionTriggered(
+      () => {
+        this.handleCohenSutherlandSelectedToDrawLineOnCutActionTriggered();
+      }
     );
   }
 }

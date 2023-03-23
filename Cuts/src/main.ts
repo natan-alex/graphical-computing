@@ -1,11 +1,11 @@
-import { Canvas } from "./components/canvas";
 import { Manager } from "./managers/manager";
-import { ButtonsAgregator } from "./components/buttonsAgregator";
+import { Canvas } from "./components/canvas";
+import { ActionTriggers } from "./components/actionTriggers";
 
 function main() {
   const canvas = new Canvas();
-  const buttonsAgregator = new ButtonsAgregator();
-  const manager = new Manager(canvas, buttonsAgregator);
+  const actionTriggers = new ActionTriggers();
+  const manager = new Manager(canvas, actionTriggers);
 
   manager.setup();
 }

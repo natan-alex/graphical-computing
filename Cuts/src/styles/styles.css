@@ -24,7 +24,7 @@ body {
   border: 1px solid rgba(100, 100, 111, 0.5);
 }
 
-#buttons-container {
+#action-triggers-container {
   width: 25vw;
 
   padding: 10px;
@@ -38,6 +38,8 @@ body {
 button {
   all: unset;
 
+  font-size: 17px;
+
   padding: 8px;
 
   cursor: pointer;
@@ -45,7 +47,7 @@ button {
   border-radius: 4px;
 
   color: white;
-  background-color: orange;
+  background-color: darkorange;
 
   text-align: center;
 }

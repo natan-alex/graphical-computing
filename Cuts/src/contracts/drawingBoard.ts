@@ -1,7 +1,5 @@
 import { Point } from "../core/point";
 
-import { MouseEventHandler } from "../common/types";
-
 export type SetPixelParams = {
   atPoint: Point;
   color?: string;
@@ -24,9 +22,9 @@ export interface DrawingBoard {
 
   clearRectangle(params: ClearRectangleParams): void;
 
-  setMouseDownEventHandler(handler: MouseEventHandler): void;
-
-  setMouseMoveEventHandler(handler: MouseEventHandler): void;
-
-  setMouseUpEventHandler(handler: MouseEventHandler): void;
+  addEventListener<K extends keyof HTMLElementEventMap>(
+    type: K,
+    listener: (event: HTMLElementEventMap[K]) => void,
+    options?: boolean | AddEventListenerOptions | undefined
+  ): void;
 }

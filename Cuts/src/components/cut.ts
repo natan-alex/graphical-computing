@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { RectangleCorners } from "../common/types";
+import { RectangleBounds, RectangleCorners } from "../common/types";
 
 import { DrawingBoard } from "../contracts/drawingBoard";
 import { Cut as CutContract, DrawSelfOnParams } from "../contracts/cut";
@@ -13,6 +13,8 @@ export class Cut implements CutContract {
   private isDrawn = false;
 
   private rectangleCorners: RectangleCorners | null = null;
+
+  private rectangleBounds: RectangleBounds | null = null;
 
   constructor(drawingBoard: DrawingBoard) {
     throwIfNull(drawingBoard, "Drawing board cannot be null");
@@ -28,10 +30,21 @@ export class Cut implements CutContract {
     return this.rectangleCorners;
   }
 
+  get bounds(): RectangleBounds | null {
+    return this.rectangleBounds;
+  }
+
   drawSelf(params: DrawSelfOnParams) {
     this.rectangleCorners = {
       topLeft: params.topLeftCorner,
       rightBottom: params.rightBottomCorner,
+    };
+
+    this.rectangleBounds = {
+      minimumX: Math.min(params.topLeftCorner.x, params.rightBottomCorner.x),
+      maximumX: Math.max(params.topLeftCorner.x, params.rightBottomCorner.x),
+      minimumY: Math.min(params.topLeftCorner.y, params.rightBottomCorner.y),
+      maximumY: Math.max(params.topLeftCorner.y, params.rightBottomCorner.y),
     };
 
     this.drawingBoard.drawRectangle({ ...params });
@@ -44,7 +57,7 @@ export class Cut implements CutContract {
 
     this.drawingBoard.clearRectangle({
       topLeftCorner: this.rectangleCorners!.topLeft,
-      rightBottomCorner: this.rectangleCorners!.rightBottom
+      rightBottomCorner: this.rectangleCorners!.rightBottom,
     });
 
     this.isDrawn = false;

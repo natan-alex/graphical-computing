@@ -1,6 +1,6 @@
 import { Point } from "../core/point";
 
-import { RectangleCorners } from "../common/types";
+import { RectangleBounds } from "../common/types";
 
 export type DrawSelfOnParams = {
   color?: string;
@@ -11,7 +11,7 @@ export type DrawSelfOnParams = {
 export interface Cut {
   get isDrawnOnScreen(): boolean;
 
-  get corners(): RectangleCorners | null;
+  get bounds(): RectangleBounds | null;
 
   removeFromScreen(): void;
 
